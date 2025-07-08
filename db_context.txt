@@ -1,0 +1,498 @@
+-- Table: bomb_events
+tick (INTEGER)
+event (VARCHAR)
+X (FLOAT)
+Y (FLOAT)
+Z (FLOAT)
+steamid (UBIGINT)
+name (VARCHAR)
+bombsite (VARCHAR)
+round_num (UINTEGER)
+match_id (VARCHAR)
+Example data:
+  tick  event            X            Y           Z           steamid   name  bombsite  round_num                                    match_id
+183084 pickup -1878.000000  -980.000000 -415.968750 76561198074762801 m0NESY      None         21       7905-de_nuke-Vitality-vs-Falcons-2983
+ 30838 defuse  -553.862976 -2143.872803 -179.968750 76561197973140692  mezii BombsiteA          4 7905-de_mirage-Vitality-vs-Team Spirit-4980
+142435 pickup -2029.533569   535.621216   64.093842 76561197998926770  HooXi      None         17   8045-de_dust2-Virtus.pro-vs-Astralis-6585
+
+-- Table: damages
+attacker_X (FLOAT)
+attacker_Y (FLOAT)
+attacker_Z (FLOAT)
+attacker_health (DOUBLE)
+attacker_place (VARCHAR)
+attacker_name (VARCHAR)
+attacker_team_clan_name (VARCHAR)
+attacker_side (VARCHAR)
+dmg_armor (INTEGER)
+dmg_health (INTEGER)
+health (INTEGER)
+hitgroup (VARCHAR)
+tick (INTEGER)
+victim_X (FLOAT)
+victim_Y (FLOAT)
+victim_Z (FLOAT)
+victim_health (INTEGER)
+victim_place (VARCHAR)
+victim_name (VARCHAR)
+victim_team_clan_name (VARCHAR)
+victim_side (VARCHAR)
+weapon (VARCHAR)
+dmg_health_real (INTEGER)
+round_num (UINTEGER)
+match_id (VARCHAR)
+Example data:
+ attacker_X  attacker_Y  attacker_Z  attacker_health attacker_place attacker_name attacker_team_clan_name attacker_side  dmg_armor  dmg_health  health hitgroup   tick    victim_X     victim_Y   victim_Z  victim_health   victim_place victim_name victim_team_clan_name victim_side  weapon  dmg_health_real  round_num                                        match_id
+-136.569214 1516.138916    27.03125             94.0 PalaceInterior        frozen               FaZe Clan             t          3          27      46    chest  62876 -347.512268  1024.437012   60.03125             73 PalaceInterior        snow           paiN Gaming          ct    ak47               27          9    8036-de_anubis-FaZe Clan-vs-paiN Gaming-5306
+   6.597706 -812.681274   -21.96875            100.0           Roof         mezii           Team Vitality             t          0           2      97  generic 264147  363.593231 -1191.627930 -251.96875             99        HutRoof      Magisk          Team Falcons          ct inferno                2         32 8036-de_nuke-Team Falcons-vs-Team Vitality-0267
+ 338.034088 -702.374939  -168.96875            100.0      Connector         TeSeS            Team Falcons            ct          4          22      78    chest  24187  193.943588   574.670715 -215.96875            100      BombsiteA         REZ           GamerLegion           t    m4a1               22          4  8036-de_train-Team Falcons-vs-GamerLegion-8780
+
+-- Table: entry_kills
+round_num (UINTEGER)
+attacker_team_clan_name (VARCHAR)
+attacker_side (VARCHAR)
+attacker_name (VARCHAR)
+attacker_place (VARCHAR)
+attacker_X (FLOAT)
+attacker_Y (FLOAT)
+attacker_Z (FLOAT)
+weapon (VARCHAR)
+victim_name (VARCHAR)
+victim_place (VARCHAR)
+victim_X (FLOAT)
+victim_Y (FLOAT)
+victim_Z (FLOAT)
+tick (INTEGER)
+freeze_end (INTEGER)
+ticks_after_freeze (INTEGER)
+match_id (VARCHAR)
+Example data:
+ round_num attacker_team_clan_name attacker_side attacker_name attacker_place  attacker_X   attacker_Y  attacker_Z       weapon victim_name   victim_place    victim_X     victim_Y    victim_Z   tick  freeze_end  ticks_after_freeze                                      match_id
+        17                     BIG             t         hyped         Middle -290.243042  1163.447876  -86.829773       deagle        Maka       MidDoors -584.369568  2107.060791 -118.336365 145416      140840                4576               8036-de_dust2-BIG-vs-3DMAX-7888
+        13           Natus Vincere            ct     w0nderful      BombsiteA -416.428101 -2098.517334 -179.968750 usp_silencer       HooXi PalaceInterior  111.794182 -1464.156250 -175.968750 101904      100255                1649 8045-de_mirage-Astralis-vs-Natus Vincere-6515
+        23              G2 Esports            ct         hades        Catwalk -878.596863  -308.514771 -166.473694          awp         REZ       TopofMid   56.094925  -529.297302 -180.104492 197734      193454                4280 8037-de_mirage-GamerLegion-vs-G2 Esports-1400
+
+-- Table: flashbangs
+round_num (INTEGER)
+tick (INTEGER)
+thrower_name (VARCHAR)
+detonation_x (FLOAT)
+detonation_y (FLOAT)
+detonation_z (FLOAT)
+match_id (VARCHAR)
+Example data:
+ round_num   tick thrower_name  detonation_x  detonation_y  detonation_z                                  match_id
+         8  85843       kyxsan    969.327759   2152.814941      3.688464        7905-de_dust2-Falcons-vs-FaZe-0284
+         7  60292      Brollan  -1732.977417   1259.655273    578.539490           7905-de_dust2-paiN-vs-MOUZ-7231
+        24 213088        stavn    805.804138    813.017517    594.283447 8045-de_dust2-Virtus.pro-vs-Astralis-6585
+
+-- Table: game_state
+round_num (BIGINT)
+tick (BIGINT)
+ct_alive (INTEGER)
+t_alive (INTEGER)
+match_id (VARCHAR)
+Example data:
+ round_num   tick  ct_alive  t_alive                              match_id
+        11  93748         5        5      8036-de_inferno-MOUZ-vs-BIG-3966
+        23 204089         4        4  7905-de_ancient-Falcons-vs-FaZe-8307
+        16 153312         4        3 7905-de_inferno-paiN-vs-Wildcard-7231
+
+-- Table: he_grenades
+round_num (INTEGER)
+tick (INTEGER)
+thrower_name (VARCHAR)
+damage_dealt (INTEGER)
+smoke_popped (BOOLEAN)
+detonation_x (FLOAT)
+detonation_y (FLOAT)
+detonation_z (FLOAT)
+match_id (VARCHAR)
+Example data:
+ round_num   tick thrower_name  damage_dealt  smoke_popped  detonation_x  detonation_y  detonation_z                                           match_id
+        18 159353         FL1T            21         False   1178.364868   2617.012207    176.692902       8036-de_dust2-Virtus.pro-vs-Team Liquid-3987
+        19 176360      Aleksib            27         False    208.206192   1507.123169     -3.700897          8036-de_anubis-MIBR-vs-Natus Vincere-2505
+         3  18363      ewjerkz             0         False   -267.921661   1290.627563    -21.421034 8045-de_dust2-G2 Esports-vs-Ninjas in Pyjamas-0278
+
+-- Table: infernos
+start_tick (BIGINT)
+end_tick (BIGINT)
+thrower_X (DOUBLE)
+thrower_Y (DOUBLE)
+thrower_Z (DOUBLE)
+thrower_place (VARCHAR)
+thrower_name (VARCHAR)
+thrower_team_clan_name (VARCHAR)
+thrower_side (VARCHAR)
+X (DOUBLE)
+Y (DOUBLE)
+Z (DOUBLE)
+round_num (UINTEGER)
+match_id (VARCHAR)
+Example data:
+ start_tick  end_tick  thrower_X   thrower_Y  thrower_Z thrower_place thrower_name thrower_team_clan_name thrower_side            X           Y           Z  round_num                                    match_id
+      50749     51198 152.122696  864.774048   80.03125        Middle        mezii               Vitality            t   476.055298 1996.846802  138.031219          7       7905-de_inferno-Vitality-vs-MOUZ-2060
+     122095    122544 176.031738 -138.671692 -151.96875      TopofMid       device               Astralis            t -1003.737122 -670.117737 -261.968750         16 8045-de_mirage-Astralis-vs-Team Spirit-3755
+     156822    157271 477.386566 1938.166748  136.03125        Banana          ICY             Virtus.pro            t   526.056274 2546.959961  281.031250         20 8045-de_inferno-Astralis-vs-Virtus.pro-6382
+
+-- Table: kills
+assistedflash (BOOLEAN)
+assister_name (VARCHAR)
+attacker_X (FLOAT)
+attacker_Y (FLOAT)
+attacker_Z (FLOAT)
+attacker_health (INTEGER)
+attacker_place (VARCHAR)
+attacker_name (VARCHAR)
+attacker_team_clan_name (VARCHAR)
+attackerblind (BOOLEAN)
+attackerinair (BOOLEAN)
+distance (FLOAT)
+dmg_armor (INTEGER)
+dmg_health (INTEGER)
+headshot (BOOLEAN)
+hitgroup (VARCHAR)
+noscope (BOOLEAN)
+penetrated (INTEGER)
+thrusmoke (BOOLEAN)
+tick (INTEGER)
+victim_X (FLOAT)
+victim_Y (FLOAT)
+victim_Z (FLOAT)
+victim_health (INTEGER)
+victim_place (VARCHAR)
+victim_name (VARCHAR)
+victim_team_clan_name (VARCHAR)
+weapon (VARCHAR)
+round_num (UINTEGER)
+match_id (VARCHAR)
+Example data:
+ assistedflash assister_name   attacker_X   attacker_Y  attacker_Z  attacker_health attacker_place attacker_name attacker_team_clan_name  attackerblind  attackerinair  distance  dmg_armor  dmg_health  headshot  hitgroup  noscope  penetrated  thrusmoke   tick     victim_X     victim_Y    victim_Z  victim_health victim_place victim_name victim_team_clan_name        weapon  round_num                                      match_id
+         False      karrigan -1069.033447   878.144287    68.03125              100      BombsiteA         EliGE               FaZe Clan          False          False   7.06367          5          25     False     chest    False           0      False  61486 -1243.077026   658.003601   63.365074             20    BombsiteA       bLitz           The MongolZ m4a1_silencer          9 8036-de_ancient-The MongolZ-vs-FaZe Clan-4439
+         False          None   481.296112 -2323.767334  -415.96875               22        Outside          exit                    MIBR          False          False  19.07374          0          26     False right_leg    False           0       True 153776  1219.182861 -2461.903320 -415.968750              7      Outside     MUTiRiS                   SAW          ak47         18                 8036-de_nuke-SAW-vs-MIBR-1518
+         False          None    94.612244 -1099.226074  -415.96875               46          Lobby        zont1x             Team Spirit          False          False   7.72548          5         104      True      head    False           0      False  95526  -191.202026 -1203.154907 -415.968750             93      Squeaky      Vexite              FlyQuest          tec9         12     7905-de_nuke-FlyQuest-vs-Team Spirit-7562
+
+-- Table: matches
+match_id (VARCHAR)
+tournament_id (VARCHAR)
+date (TIMESTAMP)
+team1 (VARCHAR)
+team2 (VARCHAR)
+map_name (VARCHAR)
+Example data:
+                             match_id tournament_id                       date    team1    team2   map_name
+7905-de_inferno-paiN-vs-Wildcard-7231          7905 2025-05-01 13:24:52.753507     paiN Wildcard de_inferno
+  8037-de_train-HEROIC-vs-Aurora-0144          8037 2025-05-21 23:40:11.000000   HEROIC   Aurora   de_train
+  7902-de_train-Vitality-vs-MOUZ-9696          7902 2025-06-21 23:05:05.686324 Vitality     MOUZ   de_train
+
+-- Table: rounds
+round_num (UINTEGER)
+start (INTEGER)
+freeze_end (INTEGER)
+end (INTEGER)
+official_end (INTEGER)
+winner (VARCHAR)
+reason (VARCHAR)
+bomb_plant (BIGINT)
+winner_team_name (VARCHAR)
+t_equip_value (BIGINT)
+ct_equip_value (BIGINT)
+bomb_site (VARCHAR)
+match_id (VARCHAR)
+Example data:
+ round_num  start  freeze_end    end  official_end winner        reason  bomb_plant winner_team_name  t_equip_value  ct_equip_value bomb_site                                match_id
+        25 210261      211541 214993        215441     ct      t_killed        <NA>          Falcons          28650           25100      None 7905-de_mirage-Vitality-vs-Falcons-9338
+         2   6416        7696  11749         12069      t bomb_exploded        9125       G2 Esports          18050           11650 BombsiteB  8037-de_dust2-3DMAX-vs-G2 Esports-8137
+         2   9768       11048  13827         14275     ct      t_killed        <NA>      paiN Gaming          18500            1700      None  7902-de_nuke-paiN Gaming-vs-FURIA-8513
+
+-- Table: shots
+round_num (INTEGER)
+tick (INTEGER)
+user_name (VARCHAR)
+accuracy_penalty (FLOAT)
+flash_duration (FLOAT)
+inair (BOOLEAN)
+weapon (VARCHAR)
+damage_dealt (INTEGER)
+match_id (VARCHAR)
+Example data:
+ round_num   tick user_name  accuracy_penalty  flash_duration  inair      weapon  damage_dealt                                  match_id
+         5  42419   Graviti          0.013834             0.0  False  weapon_mp9             0 8036-de_ancient-3DMAX-vs-GamerLegion-8349
+         5  35924       JDC          0.020886             0.0  False weapon_ak47             0           8036-de_dust2-BIG-vs-3DMAX-7888
+        17 141890   Graviti          0.016562             0.0  False weapon_m4a1             0           8036-de_dust2-BIG-vs-3DMAX-7888
+
+-- Table: smokes
+entity_id (BIGINT)
+start_tick (BIGINT)
+end_tick (BIGINT)
+thrower_X (DOUBLE)
+thrower_Y (DOUBLE)
+thrower_Z (DOUBLE)
+thrower_place (VARCHAR)
+thrower_name (VARCHAR)
+thrower_team_clan_name (VARCHAR)
+thrower_side (VARCHAR)
+X (DOUBLE)
+Y (DOUBLE)
+Z (DOUBLE)
+round_num (UINTEGER)
+match_id (VARCHAR)
+Example data:
+ entity_id  start_tick  end_tick  thrower_X    thrower_Y   thrower_Z thrower_place thrower_name thrower_team_clan_name thrower_side           X           Y           Z  round_num                                         match_id
+       862      125486    126898 323.897247  -524.107056 -216.062256     Connector        mezii          Team Vitality           ct -635.300903  543.730835 -211.968750         16 8036-de_train-Team Vitality-vs-Team Falcons-8067
+       263      139995    141407 251.352829 -2064.985352 -367.968750       Outside      Brollan                   MOUZ            t 1101.561890 -840.623901 -405.968750         15                   7905-de_nuke-MOUZ-vs-paiN-3145
+       173        5080      6492 388.166351  1645.810059   29.960503   ShortStairs        ZywOo               Vitality            t  660.023987 2176.805176  -88.894882          1          7905-de_dust2-Vitality-vs-Wildcard-5708
+
+
+-- Available maps:
+de_anubis
+de_dust2
+de_mirage
+de_inferno
+de_nuke
+de_ancient
+de_train
+
+--Available positions on de_anubis map:
+Bridge
+TSpawn
+OutsideLong
+Walkway
+LowerTunnel
+Ruins
+Street
+SnipersNest
+Alley
+Main
+Bricks
+TSideUpper
+Water
+Middle
+Tunnel
+Heaven
+BackofB
+MidDoors
+BombsiteA
+PalaceInterior
+CTSideUpper
+CTSpawn
+Fountain
+TunnelStairs
+Canal
+TStairs
+BombsiteB
+Connector
+
+--Available positions on de_dust2 map:
+LowerTunnel
+TRamp
+MidDoors
+BombsiteB
+Hole
+TSpawn
+LongDoors
+OutsideLong
+ShortStairs
+Side
+BDoors
+ExtendedA
+TopofMid
+Catwalk
+ARamp
+TunnelStairs
+CTSpawn
+Pit
+UnderA
+UpperTunnel
+BombsiteA
+Middle
+LongA
+OutsideTunnel
+
+--Available positions on de_mirage map:
+Catwalk
+Stairs
+Ladder
+PalaceInterior
+CTSpawn
+Truck
+TopofMid
+Shop
+BombsiteB
+Underpass
+Connector
+Middle
+SideAlley
+Apartments
+BackAlley
+Jungle
+TRamp
+BombsiteA
+Scaffolding
+SnipersNest
+House
+PalaceAlley
+TSpawn
+
+
+--Available positions on de_inferno map:
+Balcony
+Pit
+CTSpawn
+Banana
+Graveyard
+Quad
+TopofMid
+Kitchen
+TRamp
+BombsiteB
+Underpass
+Arch
+Apartments
+BackAlley
+BombsiteA
+Middle
+LowerMid
+Upstairs
+SecondMid
+Library
+TSpawn
+Bridge
+Deck
+Ruins
+
+--Available positions on de_nuke map:
+Garage
+Hut
+Mini
+Admin
+Secret
+Vents
+Decon
+Roof
+Squeaky
+TSpawn
+Outside
+Catwalk
+Crane
+Rafters
+CTSpawn
+Heaven
+HutRoof
+Ramp
+Hell
+BombsiteB
+Silo
+Trophy
+BombsiteA
+Tunnels
+Vending
+Control
+Lobby
+Observation
+LockerRoom
+
+--Available positions on de_ancient map:
+CTSpawn
+Middle
+Tunnel
+SideHall
+TSpawn
+Alley
+SideEntrance
+MainHall
+House
+BombsiteB
+Outside
+TSideLower
+BombsiteA
+TopofMid
+Ruins
+Ramp
+TSideUpper
+Water
+
+--Available positions on de_train map:
+TSpawn
+BackofB
+Ivy
+TSideUpper
+Connector
+BombsiteB
+CTSpawn
+LongDog
+ElectricalBox
+Alley
+BombsiteA
+Tunnels
+Dumpster
+Entrance
+TMain
+TStairs
+
+--Available weapons:
+weapon_mp9
+weapon_negev
+weapon_knife_survival_bowie
+weapon_ssg08
+weapon_knife_ursus
+weapon_knife_flip
+weapon_knife_falchion
+weapon_deagle
+weapon_m4a1_silencer
+weapon_hegrenade
+weapon_g3sg1
+weapon_usp_silencer
+weapon_knife_karambit
+weapon_mp7
+weapon_m4a1
+weapon_taser
+weapon_mp5sd
+weapon_knife
+weapon_knife_css
+weapon_knife_cord
+weapon_knife_m9_bayonet
+weapon_knife_push
+weapon_smokegrenade
+weapon_p250
+weapon_knife_outdoor
+weapon_knife_butterfly
+weapon_knife_widowmaker
+weapon_molotov
+weapon_mac10
+weapon_hkp2000
+weapon_mag7
+weapon_knife_gut
+weapon_decoy
+weapon_ump45
+weapon_bayonet
+weapon_glock
+weapon_incgrenade
+weapon_ak47
+weapon_tec9
+weapon_fiveseven
+weapon_knife_canis
+weapon_sg556
+weapon_xm1014
+weapon_nova
+weapon_galilar
+weapon_knife_skeleton
+weapon_elite
+weapon_flashbang
+weapon_cz75a
+weapon_p90
+weapon_knife_t
+weapon_revolver
+weapon_knife_stiletto
+weapon_awp
+weapon_famas
+weapon_aug
+weapon_knife_tactical
+
+--Available events on bomb_events table:
+drop
+plant
+defuse
+detonate
+pickup
+

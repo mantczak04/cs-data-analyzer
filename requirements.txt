@@ -1,0 +1,12 @@
+#backend
+fastapi[standard]
+python-dotenv
+google-genai
+
+#database
+duckdb
+pandas
+
+#frontend
+streamlit
+requests
