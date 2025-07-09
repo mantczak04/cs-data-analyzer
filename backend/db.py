@@ -15,7 +15,7 @@ def execute_query(query: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
         - An error message string when failure, otherwise None
     """
     try:
-        with duckdb.connect(database='matches.duckdb', read_only=True) as conn:
+        with duckdb.connect(database='walle-prod.duckdb', read_only=True) as conn:
             result_df = conn.sql(query).df()
             return result_df, None
 
