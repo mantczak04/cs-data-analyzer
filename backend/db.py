@@ -1,4 +1,5 @@
-import duckdb
+import os
+import psycopg2
 import pandas as pd
 from typing import Tuple, Optional
 
@@ -15,8 +16,14 @@ def execute_query(query: str) -> Tuple[Optional[pd.DataFrame], Optional[str]]:
         - An error message string when failure, otherwise None
     """
     try:
-        with duckdb.connect(database='walle-prod.duckdb', read_only=True) as conn:
-            result_df = conn.sql(query).df()
+        with psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT")
+        ) as conn:
+            result_df = pd.read_sql_query(query, conn)
             return result_df, None
 
     except Exception as e:

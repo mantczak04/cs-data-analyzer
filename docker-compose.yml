@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:17
+    restart: always
+    environment:
+      # These variables are used by the postgres image to initialize the database.
+      # They should match the values in your .env file.
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # WARNING: Exposing port 5432 is a security risk in production.
+      # Only do this if you have a firewall rule limiting access to trusted IPs.
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    restart: always
+    env_file:
+      - .env # Loads all variables from .env file for the backend application
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    restart: always
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    environment:
+      # This sets the API URL for the frontend to communicate with the backend.
+      - API_URL=http://backend:8000/api/query
+
+volumes:
+  pgdata:
+    # This named volume persists the postgres database data across container restarts.

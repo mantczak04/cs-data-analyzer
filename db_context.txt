@@ -1,498 +1,738 @@
--- Table: bomb_events
-tick (INTEGER)
-event (VARCHAR)
-X (FLOAT)
-Y (FLOAT)
-Z (FLOAT)
-steamid (VARCHAR)
-name (VARCHAR)
-bombsite (VARCHAR)
-round_num (UINTEGER)
-match_id (VARCHAR)
+You are an expert Counter-Strike data analyst and a PostgreSQL expert. Your task is to convert natural language questions from an analyst into precise, efficient, and correct PostgreSQL queries based on the database schema provided below.
+
+### NUMERICAL ENCODING USED IN THE DATASET
+
+hitgroup Encoding:
+- 0: generic
+- 1: head
+- 2: chest
+- 3: stomach
+- 4: left_arm
+- 5: right_arm
+- 6: left_leg
+- 7: right_leg
+- 8: neck
+
+side Encoding:
+- 2: Terrorist (aliases: terrorist, terrorists, terro, tt, t)
+- 3: Counter-Terrorist (aliases: counter terrorists, anti terrorists, ct)
+
+current map pool : 'de_mirage', 'de_anubis', 'de_inferno', 'de_ancient', 'de_train', 'de_nuke', 'de_dust2'
+
+
+### GENERAL RULES:
+1.  **SQL Dialect:** Always generate queries for **PostgreSQL**.
+2.  **Primary Join Key:** The central point of the database is a match, identified by `match_checksum`. Almost all event tables join back to the `matches` table using this key.
+3.  **Output:** Always respond with SINGLE SQL query. NO COMMENTS, NO NATURAL LANGUAGE, NO MARKDOWN. JUST PURE SQL.
+4. Do not hallucinate any columns, use only tables and columns present below.
+
+### TABLES IN DATABASE
+
+Table: maps
+- id (integer, primary key): unique map identifier, auto-incremented
+- name (string, required): map name
+- game (string, required): game name
+- position_x (integer, required): map boundary X coordinate
+- position_y (integer, required): map boundary Y coordinate
+- scale (float, required): map scale factor
+- threshold_z (integer, required, default 0): height threshold on the map
+
+
+Table: matches
+- checksum (string, primary key): unique match identifier
+- name (string, required): .dem file name
+- date (timestamp with timezone, required): date and time of the match
+- map_name (string, required): name of the map played
+- tick_count (integer, required): number of ticks played in the match
+- duration (float, required): match duration in seconds
+- kill_count (integer, required): total kills in the match
+- death_count (integer, required): total deaths in the match
+- assist_count (integer, required): total assists in the match
+- shot_count (integer, required): total shots fired in the match
+- analyze_date (timestamp with timezone, required, default now()): when match data was added to the database
+- winner_name (string, optional): name of the winning team
+- winner_side (smallint, required, default 0): winner's side (2 = Terrorists, 3 = Counter Terrorists)
+- overtime_count (integer, required, default 0): number of overtime rounds played
+- max_rounds (integer, required, default 24): maximum rounds possible in the match
+
 Example data:
-  tick  event            X            Y           Z           steamid   name  bombsite  round_num                                    match_id
-183084 pickup -1878.000000  -980.000000 -415.968750 76561198074762801 m0NESY      None         21       7905-de_nuke-Vitality-vs-Falcons-2983
- 30838 defuse  -553.862976 -2143.872803 -179.968750 76561197973140692  mezii BombsiteA          4 7905-de_mirage-Vitality-vs-Team Spirit-4980
-142435 pickup -2029.533569   535.621216   64.093842 76561197998926770  HooXi      None         17   8045-de_dust2-Virtus.pro-vs-Astralis-6585
+"checksum","name","date","map_name","tick_count","duration","kill_count","death_count","assist_count","shot_count","analyze_date","winner_name","winner_side","overtime_count","max_rounds"
+"25bdb8a5103a56a4",vitality-vs-the-mongolz-m3-inferno,2025-06-23 00:17:35.000 +0200,de_inferno,181433,2834.0,134,135,60,3738,2025-07-11 14:14:24.816 +0200,Vitality,2,0,24
+"233adc4d365bb484",vitality-vs-the-mongolz-m2-dust2,2025-06-22 23:48:32.000 +0200,de_dust2,157756,2464.0,120,120,39,2988,2025-07-11 14:14:31.766 +0200,Vitality,2,0,24
+"765487b787bf641",vitality-vs-the-mongolz-m1-mirage,2025-06-22 23:08:30.000 +0200,de_mirage,162235,2534.0,128,129,51,2925,2025-07-11 14:14:38.735 +0200,The MongolZ,3,0,24
 
--- Table: damages
-attacker_X (FLOAT)
-attacker_Y (FLOAT)
-attacker_Z (FLOAT)
-attacker_health (DOUBLE)
-attacker_place (VARCHAR)
-attacker_name (VARCHAR)
-attacker_team_clan_name (VARCHAR)
-attacker_side (VARCHAR)
-dmg_armor (INTEGER)
-dmg_health (INTEGER)
-health (INTEGER)
-hitgroup (VARCHAR)
-tick (INTEGER)
-victim_X (FLOAT)
-victim_Y (FLOAT)
-victim_Z (FLOAT)
-victim_health (INTEGER)
-victim_place (VARCHAR)
-victim_name (VARCHAR)
-victim_team_clan_name (VARCHAR)
-victim_side (VARCHAR)
-weapon (VARCHAR)
-dmg_health_real (INTEGER)
-round_num (UINTEGER)
-match_id (VARCHAR)
+
+
+Table: steam_accounts
+- steam_id (string, primary key): unique player identifier (Steam ID)
+- name (string, required): player username
+- last_ban_date (timestamp with timezone, optional): date of last ban
+- is_community_banned (boolean, required): community ban status
+- has_private_profile (boolean, required): profile privacy status
+- vac_ban_count (integer, required): number of VAC bans
+- game_ban_count (integer, required): number of game bans
+- economy_ban (string, required): economy ban status
+- creation_date (timestamp with timezone, optional): account creation date
+- created_at (timestamp, required, default now()): record creation timestamp
+- updated_at (timestamp, required, default now()): record update timestamp
+
 Example data:
- attacker_X  attacker_Y  attacker_Z  attacker_health attacker_place attacker_name attacker_team_clan_name attacker_side  dmg_armor  dmg_health  health hitgroup   tick    victim_X     victim_Y   victim_Z  victim_health   victim_place victim_name victim_team_clan_name victim_side  weapon  dmg_health_real  round_num                                        match_id
--136.569214 1516.138916    27.03125             94.0 PalaceInterior        frozen               FaZe Clan             t          3          27      46    chest  62876 -347.512268  1024.437012   60.03125             73 PalaceInterior        snow           paiN Gaming          ct    ak47               27          9    8036-de_anubis-FaZe Clan-vs-paiN Gaming-5306
-   6.597706 -812.681274   -21.96875            100.0           Roof         mezii           Team Vitality             t          0           2      97  generic 264147  363.593231 -1191.627930 -251.96875             99        HutRoof      Magisk          Team Falcons          ct inferno                2         32 8036-de_nuke-Team Falcons-vs-Team Vitality-0267
- 338.034088 -702.374939  -168.96875            100.0      Connector         TeSeS            Team Falcons            ct          4          22      78    chest  24187  193.943588   574.670715 -215.96875            100      BombsiteA         REZ           GamerLegion           t    m4a1               22          4  8036-de_train-Team Falcons-vs-GamerLegion-8780
+"steam_id","name","last_ban_date","is_community_banned","has_private_profile","vac_ban_count","game_ban_count","economy_ban","creation_date","created_at","updated_at"
+"76561198377335846",snow,,false,false,0,0,none,2017-04-03 03:23:00.000 +0200,2025-07-11 14:14:47.502,2025-07-11 16:27:01.150
+"76561198066693739",EliGE,,false,false,0,0,none,2012-07-07 21:22:52.000 +0200,2025-07-11 14:15:26.501,2025-07-11 16:03:58.395
+"76561198134401925",Feitan,,false,false,0,0,none,2014-04-24 13:59:47.000 +0200,2025-07-11 14:16:03.549,2025-07-11 15:01:32.166
 
--- Table: entry_kills
-round_num (UINTEGER)
-attacker_team_clan_name (VARCHAR)
-attacker_side (VARCHAR)
-attacker_name (VARCHAR)
-attacker_place (VARCHAR)
-attacker_X (FLOAT)
-attacker_Y (FLOAT)
-attacker_Z (FLOAT)
-weapon (VARCHAR)
-victim_name (VARCHAR)
-victim_place (VARCHAR)
-victim_X (FLOAT)
-victim_Y (FLOAT)
-victim_Z (FLOAT)
-tick (INTEGER)
-freeze_end (INTEGER)
-ticks_after_freeze (INTEGER)
-match_id (VARCHAR)
+
+Table: bombs_defuse_start
+- id (integer, primary key, auto-incremented): unique bomb defuse start event identifier
+- match_checksum (string, required): match ID where the bomb defuse started
+- round_number (integer, required): round number when the defuse started
+- tick (integer, required): tick number when the defuse started
+- defuser_steam_id (string, required): Steam ID of the player who started defusing
+- defuser_name (string, required): username of the player who started defusing
+- x (float, required): X coordinate on the map where defuse started
+- y (float, required): Y coordinate on the map where defuse started
+- z (float, required): Z coordinate on the map where defuse started
+
 Example data:
- round_num attacker_team_clan_name attacker_side attacker_name attacker_place  attacker_X   attacker_Y  attacker_Z       weapon victim_name   victim_place    victim_X     victim_Y    victim_Z   tick  freeze_end  ticks_after_freeze                                      match_id
-        17                     BIG             t         hyped         Middle -290.243042  1163.447876  -86.829773       deagle        Maka       MidDoors -584.369568  2107.060791 -118.336365 145416      140840                4576               8036-de_dust2-BIG-vs-3DMAX-7888
-        13           Natus Vincere            ct     w0nderful      BombsiteA -416.428101 -2098.517334 -179.968750 usp_silencer       HooXi PalaceInterior  111.794182 -1464.156250 -175.968750 101904      100255                1649 8045-de_mirage-Astralis-vs-Natus Vincere-6515
-        23              G2 Esports            ct         hades        Catwalk -878.596863  -308.514771 -166.473694          awp         REZ       TopofMid   56.094925  -529.297302 -180.104492 197734      193454                4280 8037-de_mirage-GamerLegion-vs-G2 Esports-1400
+"id","match_checksum","round_number","tick","defuser_steam_id","defuser_name","x","y","z"
+1,"25bdb8a5103a56a4",8,67746,"76561197978835160",flameZ,1939.946533,321.398163,161.03125
+2,"25bdb8a5103a56a4",11,98171,"76561197989744167",apEX,1963.94165,235.858856,160.03125
+3,"25bdb8a5103a56a4",12,104849,"76561197973140692",mezii,1876.542358,326.978058,161.031219
 
--- Table: flashbangs
-round_num (INTEGER)
-tick (INTEGER)
-thrower_name (VARCHAR)
-detonation_x (FLOAT)
-detonation_y (FLOAT)
-detonation_z (FLOAT)
-match_id (VARCHAR)
+
+
+Table: bombs_defused
+- id (integer, primary key, auto-incremented): unique bomb defused event identifier
+- match_checksum (string, required): match ID where the bomb was defused
+- round_number (integer, required): round number when defuse happened
+- tick (integer, required): tick number when defuse happened
+- site (string, required): bomb site where defuse occurred
+- defuser_steam_id (string, required): Steam ID of the player who defused the bomb
+- defuser_name (string, required): username of the player who defused the bomb
+- x (float, required): X coordinate on the map of defuse location
+- y (float, required): Y coordinate on the map of defuse location
+- z (float, required): Z coordinate on the map of defuse location
+- ct_alive_count (integer, required): number of CT players alive at defuse
+- t_alive_count (integer, required): number of T players alive at defuse
+
 Example data:
- round_num   tick thrower_name  detonation_x  detonation_y  detonation_z                                  match_id
-         8  85843       kyxsan    969.327759   2152.814941      3.688464        7905-de_dust2-Falcons-vs-FaZe-0284
-         7  60292      Brollan  -1732.977417   1259.655273    578.539490           7905-de_dust2-paiN-vs-MOUZ-7231
-        24 213088        stavn    805.804138    813.017517    594.283447 8045-de_dust2-Virtus.pro-vs-Astralis-6585
+"id","match_checksum","round_number","tick","site","defuser_steam_id","defuser_name","x","y","z","ct_alive_count","t_alive_count"
+1,"25bdb8a5103a56a4",8,68066,A,"76561197978835160",flameZ,1939.946533,321.398163,161.03125,2,0
+2,"25bdb8a5103a56a4",11,98811,A,"76561197989744167",apEX,1963.94165,235.858856,160.03125,2,0
+3,"25bdb8a5103a56a4",12,105489,A,"76561197973140692",mezii,1876.542358,326.978058,161.031219,2,0
 
--- Table: game_state
-round_num (BIGINT)
-tick (BIGINT)
-ct_alive (INTEGER)
-t_alive (INTEGER)
-match_id (VARCHAR)
+
+Table: bombs_exploded
+- id (integer, primary key, auto-incremented): unique bomb exploded event identifier
+- match_checksum (string, required): match ID where bomb exploded
+- round_number (integer, required): round number when bomb exploded
+- tick (integer, required): tick number when bomb exploded
+- site (string, required): bomb site where explosion happened
+- planter_steam_id (string, required): Steam ID of player who planted the bomb
+- planter_name (string, required): username of player who planted the bomb
+- x (float, required): X coordinate of bomb explosion location
+- y (float, required): Y coordinate of bomb explosion location
+- z (float, required): Z coordinate of bomb explosion location
+
 Example data:
- round_num   tick  ct_alive  t_alive                              match_id
-        11  93748         5        5      8036-de_inferno-MOUZ-vs-BIG-3966
-        23 204089         4        4  7905-de_ancient-Falcons-vs-FaZe-8307
-        16 153312         4        3 7905-de_inferno-paiN-vs-Wildcard-7231
+"id","match_checksum","round_number","tick","site","planter_steam_id","planter_name","x","y","z"
+1,"25bdb8a5103a56a4",7,58116,A,"76561198966340160",Techno4K,2074.518799,184.673889,160.03125
+2,"25bdb8a5103a56a4",14,134245,B,"76561197991272318",ropz,553.778198,2883.965332,161.531235
+3,"233adc4d365bb484",7,56212,B,"76561199203563345","910",-1688.994263,2528.525391,8.494678
 
--- Table: he_grenades
-round_num (INTEGER)
-tick (INTEGER)
-thrower_name (VARCHAR)
-damage_dealt (INTEGER)
-smoke_popped (BOOLEAN)
-detonation_x (FLOAT)
-detonation_y (FLOAT)
-detonation_z (FLOAT)
-match_id (VARCHAR)
+
+Table: bombs_plant_start
+- id (integer, primary key, auto-incremented): unique bomb plant start event identifier
+- match_checksum (string, required): match ID where bomb plant started
+- round_number (integer, required): round number when plant started
+- tick (integer, required): tick number when plant started
+- site (string, required): bomb site where plant started
+- planter_steam_id (string, required): Steam ID of player who started planting
+- planter_name (string, required): username of player who started planting
+- x (float, required): X coordinate of plant start location
+- y (float, required): Y coordinate of plant start location
+- z (float, required): Z coordinate of plant start location
+
 Example data:
- round_num   tick thrower_name  damage_dealt  smoke_popped  detonation_x  detonation_y  detonation_z                                           match_id
-        18 159353         FL1T            21         False   1178.364868   2617.012207    176.692902       8036-de_dust2-Virtus.pro-vs-Team Liquid-3987
-        19 176360      Aleksib            27         False    208.206192   1507.123169     -3.700897          8036-de_anubis-MIBR-vs-Natus Vincere-2505
-         3  18363      ewjerkz             0         False   -267.921661   1290.627563    -21.421034 8045-de_dust2-G2 Esports-vs-Ninjas in Pyjamas-0278
+"id","match_checksum","round_number","tick","site","planter_steam_id","planter_name","x","y","z"
+2,"25bdb8a5103a56a4",5,41465,B,"76561198966340160",Techno4K,210.033478,2864.0354,161.531265
+3,"25bdb8a5103a56a4",7,55292,A,"76561198966340160",Techno4K,2074.518799,184.673889,160.03125
 
--- Table: infernos
-start_tick (BIGINT)
-end_tick (BIGINT)
-thrower_X (DOUBLE)
-thrower_Y (DOUBLE)
-thrower_Z (DOUBLE)
-thrower_place (VARCHAR)
-thrower_name (VARCHAR)
-thrower_team_clan_name (VARCHAR)
-thrower_side (VARCHAR)
-X (DOUBLE)
-Y (DOUBLE)
-Z (DOUBLE)
-round_num (UINTEGER)
-match_id (VARCHAR)
+
+Table: bombs_planted
+- id (integer, primary key, auto-incremented): unique bomb planted event identifier
+- match_checksum (string, required): match ID where bomb was planted
+- round_number (integer, required): round number when bomb was planted
+- tick (integer, required): tick number when bomb was planted
+- site (string, required): bomb site where planting occurred
+- planter_steam_id (string, required): Steam ID of player who planted the bomb
+- planter_name (string, required): username of player who planted the bomb
+- x (float, required): X coordinate of planting location
+- y (float, required): Y coordinate of planting location
+- z (float, required): Z coordinate of planting location
+
 Example data:
- start_tick  end_tick  thrower_X   thrower_Y  thrower_Z thrower_place thrower_name thrower_team_clan_name thrower_side            X           Y           Z  round_num                                    match_id
-      50749     51198 152.122696  864.774048   80.03125        Middle        mezii               Vitality            t   476.055298 1996.846802  138.031219          7       7905-de_inferno-Vitality-vs-MOUZ-2060
-     122095    122544 176.031738 -138.671692 -151.96875      TopofMid       device               Astralis            t -1003.737122 -670.117737 -261.968750         16 8045-de_mirage-Astralis-vs-Team Spirit-3755
-     156822    157271 477.386566 1938.166748  136.03125        Banana          ICY             Virtus.pro            t   526.056274 2546.959961  281.031250         20 8045-de_inferno-Astralis-vs-Virtus.pro-6382
+"id","match_checksum","round_number","tick","site","planter_steam_id","planter_name","x","y","z"
+2,"25bdb8a5103a56a4",7,55492,A,"76561198966340160",Techno4K,2074.518799,184.673889,160.03125
+3,"25bdb8a5103a56a4",8,66363,A,"76561198920720017",Senzu,1915.081055,361.021973,161.03125
 
--- Table: kills
-assistedflash (BOOLEAN)
-assister_name (VARCHAR)
-attacker_X (FLOAT)
-attacker_Y (FLOAT)
-attacker_Z (FLOAT)
-attacker_health (INTEGER)
-attacker_place (VARCHAR)
-attacker_name (VARCHAR)
-attacker_team_clan_name (VARCHAR)
-attackerblind (BOOLEAN)
-attackerinair (BOOLEAN)
-distance (FLOAT)
-dmg_armor (INTEGER)
-dmg_health (INTEGER)
-headshot (BOOLEAN)
-hitgroup (VARCHAR)
-noscope (BOOLEAN)
-penetrated (INTEGER)
-thrusmoke (BOOLEAN)
-tick (INTEGER)
-victim_X (FLOAT)
-victim_Y (FLOAT)
-victim_Z (FLOAT)
-victim_health (INTEGER)
-victim_place (VARCHAR)
-victim_name (VARCHAR)
-victim_team_clan_name (VARCHAR)
-weapon (VARCHAR)
-round_num (UINTEGER)
-match_id (VARCHAR)
+
+Table: chat_messages
+- id (integer, primary key, auto-incremented): unique chat message identifier
+- match_checksum (string, required): match ID where message was sent
+- round_number (integer, required): round number when message was sent
+- tick (integer, required): tick number when message was sent
+- message (string, required): text content of the chat message
+- sender_steam_id (string, required): Steam ID of the message sender
+- sender_name (string, required): username of the message sender
+- sender_is_alive (boolean, required): whether sender was alive when message was sent
+- sender_side (smallint, required): sender's team side (2 = Terrorist, 3 = Counter-Terrorist)
+
 Example data:
- assistedflash assister_name   attacker_X   attacker_Y  attacker_Z  attacker_health attacker_place attacker_name attacker_team_clan_name  attackerblind  attackerinair  distance  dmg_armor  dmg_health  headshot  hitgroup  noscope  penetrated  thrusmoke   tick     victim_X     victim_Y    victim_Z  victim_health victim_place victim_name victim_team_clan_name        weapon  round_num                                      match_id
-         False      karrigan -1069.033447   878.144287    68.03125              100      BombsiteA         EliGE               FaZe Clan          False          False   7.06367          5          25     False     chest    False           0      False  61486 -1243.077026   658.003601   63.365074             20    BombsiteA       bLitz           The MongolZ m4a1_silencer          9 8036-de_ancient-The MongolZ-vs-FaZe Clan-4439
-         False          None   481.296112 -2323.767334  -415.96875               22        Outside          exit                    MIBR          False          False  19.07374          0          26     False right_leg    False           0       True 153776  1219.182861 -2461.903320 -415.968750              7      Outside     MUTiRiS                   SAW          ak47         18                 8036-de_nuke-SAW-vs-MIBR-1518
-         False          None    94.612244 -1099.226074  -415.96875               46          Lobby        zont1x             Team Spirit          False          False   7.72548          5         104      True      head    False           0      False  95526  -191.202026 -1203.154907 -415.968750             93      Squeaky      Vexite              FlyQuest          tec9         12     7905-de_nuke-FlyQuest-vs-Team Spirit-7562
+"id","match_checksum","round_number","tick","message","sender_steam_id","sender_name","sender_is_alive","sender_side"
+2,"25bdb8a5103a56a4",1,4413,hfhf,"76561198838822582",Mzinho,true,2
+3,"25bdb8a5103a56a4",1,4414,hfhf,"76561197978835160",flameZ,true,3
 
--- Table: matches
-match_id (VARCHAR)
-tournament_id (VARCHAR)
-date (TIMESTAMP)
-team1 (VARCHAR)
-team2 (VARCHAR)
-map_name (VARCHAR)
+
+Table: clutches
+- id (integer, primary key, auto-incremented): unique clutch event identifier
+- match_checksum (string, required): match ID where clutch happened
+- round_number (integer, required): round number of the clutch
+- tick (integer, required): tick number when clutch occurred
+- clutcher_name (string, required): username of the player attempting clutch
+- clutcher_steam_id (string, required): Steam ID of the clutcher
+- won (boolean, required): whether the clutcher won the round
+- side (smallint, required): team side of the clutcher (2 = Terrorist, 3 = Counter-Terrorist)
+- opponent_count (integer, required): number of opponents alive against clutcher
+- has_clutcher_survived (boolean, required): whether clutcher survived after clutch
+- clutcher_kill_count (integer, required): number of kills by clutcher during clutch
+
 Example data:
-                             match_id tournament_id                       date    team1    team2   map_name
-7905-de_inferno-paiN-vs-Wildcard-7231          7905 2025-05-01 13:24:52.753507     paiN Wildcard de_inferno
-  8037-de_train-HEROIC-vs-Aurora-0144          8037 2025-05-21 23:40:11.000000   HEROIC   Aurora   de_train
-  7902-de_train-Vitality-vs-MOUZ-9696          7902 2025-06-21 23:05:05.686324 Vitality     MOUZ   de_train
+"id","match_checksum","round_number","tick","clutcher_name","clutcher_steam_id","won","side","opponent_count","has_clutcher_survived","clutcher_kill_count"
+1,"25bdb8a5103a56a4",1,12966,apEX,"76561197989744167",false,3,2,false,1
+2,"25bdb8a5103a56a4",1,13131,Mzinho,"76561198838822582",true,2,1,true,1
+3,"25bdb8a5103a56a4",2,21081,ZywOo,"76561198113666193",true,3,2,true,2
 
--- Table: rounds
-round_num (UINTEGER)
-start (INTEGER)
-freeze_end (INTEGER)
-end (INTEGER)
-official_end (INTEGER)
-winner (VARCHAR)
-reason (VARCHAR)
-bomb_plant (BIGINT)
-winner_team_name (VARCHAR)
-t_equip_value (BIGINT)
-ct_equip_value (BIGINT)
-bomb_site (VARCHAR)
-match_id (VARCHAR)
+
+Table: damages
+- id (integer, primary key, auto-incremented): unique damage event identifier
+- match_checksum (string, required): match ID where damage occurred
+- round_number (integer, required): round number of the damage event
+- tick (integer, required): tick number when damage was dealt
+- health_damage (integer, required): amount of health damage dealt
+- armor_damage (integer, required): amount of armor damage dealt
+- victim_health (integer, required): victim's health before damage
+- victim_new_health (integer, required): victim's health after damage
+- victim_armor (integer, required): victim's armor before damage
+- victim_new_armor (integer, required): victim's armor after damage
+- hitgroup (smallint, required): body part hit (encoded as integer)
+- weapon_name (string, required): weapon used for damage
+- weapon_type (string, required): type/category of weapon
+- attacker_steam_id (string, optional): Steam ID of the attacker
+- attacker_side (smallint, required): attacker's team side (2 = Terrorist, 3 = Counter-Terrorist)
+- attacker_team_name (string, optional): attacker's team name
+- victim_steam_id (string, required): Steam ID of the victim
+- victim_side (smallint, required): victim's team side
+- victim_team_name (string, required): victim's team name
+
 Example data:
- round_num  start  freeze_end    end  official_end winner        reason  bomb_plant winner_team_name  t_equip_value  ct_equip_value bomb_site                                match_id
-        25 210261      211541 214993        215441     ct      t_killed        <NA>          Falcons          28650           25100      None 7905-de_mirage-Vitality-vs-Falcons-9338
-         2   6416        7696  11749         12069      t bomb_exploded        9125       G2 Esports          18050           11650 BombsiteB  8037-de_dust2-3DMAX-vs-G2 Esports-8137
-         2   9768       11048  13827         14275     ct      t_killed        <NA>      paiN Gaming          18500            1700      None  7902-de_nuke-paiN Gaming-vs-FURIA-8513
+"id","match_checksum","round_number","tick","health_damage","armor_damage","victim_health","victim_new_health","victim_armor","victim_new_armor","hitgroup","weapon_name","weapon_type","attacker_steam_id","attacker_side","attacker_team_name","victim_steam_id","victim_side","victim_team_name"
+1,"25bdb8a5103a56a4",1,8893,80,0,100,20,0,0,1,Glock-18,pistol,"76561198959824088",2,The MongolZ,"76561197973140692",3,Vitality
+2,"25bdb8a5103a56a4",1,8903,20,0,20,0,0,0,2,Glock-18,pistol,"76561198959824088",2,The MongolZ,"76561197973140692",3,Vitality
+3,"25bdb8a5103a56a4",1,9688,100,0,100,0,100,100,1,USP-S,pistol,"76561197991272318",3,Vitality,"76561198920720017",2,The MongolZ
 
--- Table: shots
-round_num (INTEGER)
-tick (INTEGER)
-user_name (VARCHAR)
-accuracy_penalty (FLOAT)
-flash_duration (FLOAT)
-inair (BOOLEAN)
-weapon (VARCHAR)
-damage_dealt (INTEGER)
-match_id (VARCHAR)
+
+
+Table: flashbangs_explode
+- id (integer, primary key, auto-incremented): unique flashbang explosion event ID
+- match_checksum (string, required): match ID where flashbang exploded
+- round_number (integer, required): round number of the explosion event
+- tick (integer, required): tick number when flashbang exploded
+- thrower_steam_id (string, required): Steam ID of the player who threw the flashbang
+- thrower_name (string, required): username of the thrower
+- thrower_team_name (string, required): team name of the thrower
+- thrower_side (smallint, required): team side of thrower (2 = Terrorist, 3 = Counter-Terrorist)
+- grenade_id (string, required): unique ID of the flashbang grenade entity
+- x (float, required): X coordinate of explosion location on the map
+- y (float, required): Y coordinate of explosion location
+- z (float, required): Z coordinate (height) of explosion location
+
 Example data:
- round_num   tick user_name  accuracy_penalty  flash_duration  inair      weapon  damage_dealt                                  match_id
-         5  42419   Graviti          0.013834             0.0  False  weapon_mp9             0 8036-de_ancient-3DMAX-vs-GamerLegion-8349
-         5  35924       JDC          0.020886             0.0  False weapon_ak47             0           8036-de_dust2-BIG-vs-3DMAX-7888
-        17 141890   Graviti          0.016562             0.0  False weapon_m4a1             0           8036-de_dust2-BIG-vs-3DMAX-7888
+"id","match_checksum","round_number","tick","thrower_steam_id","thrower_name","thrower_team_name","thrower_side","grenade_id","x","y","z"
+1,"25bdb8a5103a56a4",1,10269,"76561198959824088",bLitz,The MongolZ,2,"01JZWPGS2BA5HR09QEBQ1W7HM3",158.12204,990.291443,253.089752
+2,"25bdb8a5103a56a4",1,10269,"76561198959824088",bLitz,The MongolZ,2,"01JZWPGS2BA5HR09QEBQ1W7HM3",158.125,990.28125,253.09375
+3,"25bdb8a5103a56a4",1,12119,"76561198959824088",bLitz,The MongolZ,2,"01JZWPGS2BA5HR09QEBQ1W7HM3",1188.537476,2629.264404,231.244644
 
--- Table: smokes
-entity_id (BIGINT)
-start_tick (BIGINT)
-end_tick (BIGINT)
-thrower_X (DOUBLE)
-thrower_Y (DOUBLE)
-thrower_Z (DOUBLE)
-thrower_place (VARCHAR)
-thrower_name (VARCHAR)
-thrower_team_clan_name (VARCHAR)
-thrower_side (VARCHAR)
-X (DOUBLE)
-Y (DOUBLE)
-Z (DOUBLE)
-round_num (UINTEGER)
-match_id (VARCHAR)
+
+
+Table: he_grenades_explode
+- id (integer, primary key, auto-incremented): unique HE grenade explosion event ID
+- match_checksum (string, required): match ID where HE grenade exploded
+- round_number (integer, required): round number of the explosion event
+- tick (integer, required): tick number when HE grenade exploded
+- thrower_steam_id (string, required): Steam ID of the player who threw the HE grenade
+- thrower_name (string, required): username of the thrower
+- thrower_team_name (string, required): team name of the thrower
+- thrower_side (smallint, required): team side of thrower (2 = Terrorist, 3 = Counter-Terrorist)
+- grenade_id (string, required): unique ID of the HE grenade entity
+- x (float, required): X coordinate of explosion location on the map
+- y (float, required): Y coordinate of explosion location
+- z (float, required): Z coordinate (height) of explosion location
+
 Example data:
- entity_id  start_tick  end_tick  thrower_X    thrower_Y   thrower_Z thrower_place thrower_name thrower_team_clan_name thrower_side           X           Y           Z  round_num                                         match_id
-       862      125486    126898 323.897247  -524.107056 -216.062256     Connector        mezii          Team Vitality           ct -635.300903  543.730835 -211.968750         16 8036-de_train-Team Vitality-vs-Team Falcons-8067
-       263      139995    141407 251.352829 -2064.985352 -367.968750       Outside      Brollan                   MOUZ            t 1101.561890 -840.623901 -405.968750         15                   7905-de_nuke-MOUZ-vs-paiN-3145
-       173        5080      6492 388.166351  1645.810059   29.960503   ShortStairs        ZywOo               Vitality            t  660.023987 2176.805176  -88.894882          1          7905-de_dust2-Vitality-vs-Wildcard-5708
+"id","match_checksum","round_number","tick","thrower_steam_id","thrower_name","thrower_team_name","thrower_side","grenade_id","x","y","z"
+1,"25bdb8a5103a56a4",1,10322,"76561197989744167",apEX,Vitality,3,"01JZWPGS0VZ4ES1NT6CS86R1E8",833.695496,2403.768555,139.785553
+2,"25bdb8a5103a56a4",2,16609,"76561197989744167",apEX,Vitality,3,"01JZWPGSGQVSVY3HT3GR3PF05C",33.613361,812.209412,81.290741
+3,"25bdb8a5103a56a4",2,17370,"76561198920720017",Senzu,The MongolZ,2,"01JZWPGSGEJZ3A7NN834YTJ03S",785.028931,2268.602051,139.502808
 
 
--- Available maps:
-de_anubis
-de_dust2
-de_mirage
-de_inferno
-de_nuke
-de_ancient
-de_train
+Table: kills
+- id (integer, primary key, auto-incremented): unique kill event ID
+- match_checksum (string, required): match ID where kill happened
+- round_number (integer, required): round number of kill event
+- tick (integer, required): tick number of kill event
+- killer_steam_id (string): Steam ID of killer (nullable)
+- killer_name (string): name of killer (nullable)
+- killer_team_name (string): team name of killer (nullable)
+- killer_side (smallint): side of killer (nullable; 2=Terrorist, 3=Counter Terrorist)
+- victim_steam_id (string, required): Steam ID of victim
+- victim_name (string, required): name of victim
+- victim_team_name (string, required): victim's team name
+- victim_side (smallint, required): victim's side (2=Terrorist, 3=Counter Terrorist)
+- assister_steam_id (string): Steam ID of assister (nullable)
+- assister_name (string): name of assister (nullable)
+- assister_team_name (string): assister's team (nullable)
+- assister_side (smallint): assister's side (nullable)
+- is_headshot (bool, required): whether kill was a headshot
+- is_assisted_flash (bool, required): whether kill was assisted by flash (victim was blind when killed)
+- penetrated_objects (integer, required): number of penetrated objects for shot
+- killer_x, killer_y, killer_z (float, required): killer's coordinates at kill time
+- is_killer_airborne (bool, required): if killer was airborne
+- is_killer_blinded (bool, required): if killer was blinded
+- victim_x, victim_y, victim_z (float, required): victim's coordinates at death
+- is_victim_airborne (bool, required): if victim was airborne
+- is_victim_blinded (bool, required): if victim was blinded
+- is_victim_inspecting_weapon (bool, required): if victim was inspecting weapon
+- assister_x, assister_y, assister_z (float, required): assister's coordinates (if any)
+- weapon_name (string, required): name of weapon used
+- weapon_type (string, required): type/category of weapon
+- is_trade_kill (bool, required): whether kill was a trade kill
+- is_trade_death (bool, required): whether death was a trade death
+- is_through_smoke (bool, required): if shot was through smoke
+- is_no_scope (bool, required): if kill was no-scope shot
+- distance (float, required): distance between killer and victim at kill
 
---Available positions on de_anubis map:
-Bridge
-TSpawn
-OutsideLong
-Walkway
-LowerTunnel
-Ruins
-Street
-SnipersNest
-Alley
-Main
-Bricks
-TSideUpper
-Water
-Middle
-Tunnel
-Heaven
-BackofB
-MidDoors
-BombsiteA
-PalaceInterior
-CTSideUpper
-CTSpawn
-Fountain
-TunnelStairs
-Canal
-TStairs
-BombsiteB
-Connector
-
---Available positions on de_dust2 map:
-LowerTunnel
-TRamp
-MidDoors
-BombsiteB
-Hole
-TSpawn
-LongDoors
-OutsideLong
-ShortStairs
-Side
-BDoors
-ExtendedA
-TopofMid
-Catwalk
-ARamp
-TunnelStairs
-CTSpawn
-Pit
-UnderA
-UpperTunnel
-BombsiteA
-Middle
-LongA
-OutsideTunnel
-
---Available positions on de_mirage map:
-Catwalk
-Stairs
-Ladder
-PalaceInterior
-CTSpawn
-Truck
-TopofMid
-Shop
-BombsiteB
-Underpass
-Connector
-Middle
-SideAlley
-Apartments
-BackAlley
-Jungle
-TRamp
-BombsiteA
-Scaffolding
-SnipersNest
-House
-PalaceAlley
-TSpawn
+Example data:
+"id","match_checksum","round_number","tick","killer_steam_id","killer_name","killer_team_name","killer_side","victim_steam_id","victim_name","victim_team_name","victim_side","assister_steam_id","assister_name","assister_team_name","assister_side","is_headshot","is_assisted_flash","penetrated_objects","killer_x","killer_y","killer_z","is_killer_airborne","is_killer_blinded","victim_x","victim_y","victim_z","is_victim_airborne","is_victim_blinded","is_victim_inspecting_weapon","assister_x","assister_y","assister_z","weapon_name","weapon_type","is_trade_kill","is_trade_death","is_through_smoke","is_no_scope","distance"
+1,"25bdb8a5103a56a4",1,8903,"76561198959824088",bLitz,The MongolZ,2,"76561197973140692",mezii,Vitality,3,"0",,,0,false,false,0,286.235382,662.111328,19.734322,false,false,1476.356323,401.63324,129.03125,false,false,false,0.0,0.0,0.0,Glock-18,pistol,false,false,false,false,31.087851
+2,"25bdb8a5103a56a4",1,9688,"76561197991272318",ropz,Vitality,3,"76561198920720017",Senzu,The MongolZ,2,"0",,,0,true,false,0,1471.643066,385.604736,129.03125,false,false,136.784744,751.448792,81.014282,false,false,false,0.0,0.0,0.0,USP-S,pistol,false,false,false,false,35.112442
+3,"25bdb8a5103a56a4",1,12548,"76561198966340160",Techno4K,The MongolZ,2,"76561197991272318",ropz,Vitality,3,"76561198838822582",Mzinho,The MongolZ,2,false,false,0,57.5355,2540.31958,161.03125,false,false,972.640869,2754.621826,132.526688,false,false,false,731.049805,2175.069092,136.031311,Glock-18,pistol,false,false,false,false,23.808235
 
 
---Available positions on de_inferno map:
-Balcony
-Pit
-CTSpawn
-Banana
-Graveyard
-Quad
-TopofMid
-Kitchen
-TRamp
-BombsiteB
-Underpass
-Arch
-Apartments
-BackAlley
-BombsiteA
-Middle
-LowerMid
-Upstairs
-SecondMid
-Library
-TSpawn
-Bridge
-Deck
-Ruins
+Table: player_blinds
+- id (integer, primary key, auto-incremented): unique blind event ID
+- match_checksum (string, required): match ID where blind event occurred
+- round_number (integer, required): round number of blind event
+- tick (integer, required): tick number when blind happened
+- duration (float, required): duration of blindness in seconds
+- flasher_steam_id (string, required): Steam ID of player who threw flashbang
+- flasher_name (string, required): name of player who threw flashbang
+- flasher_side (smallint, required): side of flasher (2=Terrorist, 3=Counter Terrorist)
+- flashed_steam_id (string, required): Steam ID of blinded player
+- flashed_name (string, required): name of blinded player
+- flashed_side (smallint, required): side of blinded player (2=Terrorist, 3=Counter Terrorist)
 
---Available positions on de_nuke map:
-Garage
-Hut
-Mini
-Admin
-Secret
-Vents
-Decon
-Roof
-Squeaky
-TSpawn
-Outside
-Catwalk
-Crane
-Rafters
-CTSpawn
-Heaven
-HutRoof
-Ramp
-Hell
-BombsiteB
-Silo
-Trophy
-BombsiteA
-Tunnels
-Vending
-Control
-Lobby
-Observation
-LockerRoom
+Example data:
+"id","match_checksum","round_number","tick","duration","flasher_steam_id","flasher_name","flasher_side","flashed_steam_id","flashed_name","flashed_side"
+1,"25bdb8a5103a56a4",1,10269,0.12571,"76561198959824088",bLitz,2,"76561198959824088",bLitz,2
+2,"25bdb8a5103a56a4",1,10269,1.994939,"76561198959824088",bLitz,2,"76561199203563345","910",2
+3,"25bdb8a5103a56a4",1,12119,2.095998,"76561198959824088",bLitz,2,"76561198113666193",ZywOo,3
 
---Available positions on de_ancient map:
-CTSpawn
-Middle
-Tunnel
-SideHall
-TSpawn
-Alley
-SideEntrance
-MainHall
-House
-BombsiteB
-Outside
-TSideLower
-BombsiteA
-TopofMid
-Ruins
-Ramp
-TSideUpper
-Water
 
---Available positions on de_train map:
-TSpawn
-BackofB
-Ivy
-TSideUpper
-Connector
-BombsiteB
-CTSpawn
-LongDog
-ElectricalBox
-Alley
-BombsiteA
-Tunnels
-Dumpster
-Entrance
-TMain
-TStairs
 
---Available weapons:
-weapon_mp9
-weapon_negev
-weapon_knife_survival_bowie
-weapon_ssg08
-weapon_knife_ursus
-weapon_knife_flip
-weapon_knife_falchion
-weapon_deagle
-weapon_m4a1_silencer
-weapon_hegrenade
-weapon_g3sg1
-weapon_usp_silencer
-weapon_knife_karambit
-weapon_mp7
-weapon_m4a1
-weapon_taser
-weapon_mp5sd
-weapon_knife
-weapon_knife_css
-weapon_knife_cord
-weapon_knife_m9_bayonet
-weapon_knife_push
-weapon_smokegrenade
-weapon_p250
-weapon_knife_outdoor
-weapon_knife_butterfly
-weapon_knife_widowmaker
-weapon_molotov
-weapon_mac10
-weapon_hkp2000
-weapon_mag7
-weapon_knife_gut
-weapon_decoy
-weapon_ump45
-weapon_bayonet
-weapon_glock
-weapon_incgrenade
-weapon_ak47
-weapon_tec9
-weapon_fiveseven
-weapon_knife_canis
-weapon_sg556
-weapon_xm1014
-weapon_nova
-weapon_galilar
-weapon_knife_skeleton
-weapon_elite
-weapon_flashbang
-weapon_cz75a
-weapon_p90
-weapon_knife_t
-weapon_revolver
-weapon_knife_stiletto
-weapon_awp
-weapon_famas
-weapon_aug
-weapon_knife_tactical
+Table: player_economies
+- id (integer, primary key, auto-incremented): unique economy record ID
+- match_checksum (string, required): match ID
+- round_number (integer, required): round number
+- player_steam_id (string, required): Steam ID of the player
+- player_name (string, required): player username
+- player_side (smallint, optional): player side (2=Terrorist, 3=Counter Terrorist)
+- start_money (integer, required): money the player had at round start
+- money_spent (integer, required): money spent in the round
+- equipment_value (integer, required): total value of equipment bought in round
+- type (string, required): type of economy action (pistol, eco, semi, force-buy, full)
 
---Available events on bomb_events table:
-drop
-plant
-defuse
-detonate
-pickup
+Example data:
+"id","match_checksum","round_number","player_steam_id","player_name","player_side","start_money","money_spent","equipment_value","type"
+1,"25bdb8a5103a56a4",1,"76561198920720017",Senzu,2,800,650,850,pistol
+2,"25bdb8a5103a56a4",1,"76561198959824088",bLitz,2,800,700,1300,pistol
+3,"25bdb8a5103a56a4",1,"76561199203563345","910",2,800,750,950,pistol
 
+
+Table: players
+- id (integer, PK, auto-increment): unique player record ID
+- match_checksum (string, required): match ID
+- steam_id (string, required): player's Steam ID
+- index (smallint, required): player index in match (0-based)
+- team_name (string, required): player's team name
+- name (string, required): player username
+
+Performance stats:
+- kill_count (int, required): total kills in match
+- death_count (int, required): total deaths in match
+- assist_count (int, required): total assists
+- kill_death_ratio (float, required): kills/deaths ratio
+- headshot_count (int, required): headshot kills count
+- headshot_percentage (float, required): % headshots from kills
+- damage_health (int, required): total health damage dealt
+- damage_armor (int, required): total armor damage dealt
+- first_kill_count (int, required): count of first kills in rounds
+- first_death_count (int, required): count of first deaths in rounds
+- mvp_count (int, required): MVP awards count
+
+Per round averages:
+- average_damage_per_round (float, required)
+- average_kill_per_round (float, required)
+- average_death_per_round (float, required)
+- utility_damage_per_round (float, required)
+
+Objectives:
+- bomb_planted_count (int, required)
+- bomb_defused_count (int, required)
+
+Other stats:
+- score (int, required): overall score
+- kast (float, required): % rounds with kill, assist, survive or traded
+- hltv_rating (float, required): HLTV rating
+- hltv_rating_2 (float, required): HLTV 2.0 rating
+- utility_damage (int, required): total utility damage
+- trade_kill_count (int, required)
+- trade_death_count (int, required)
+- first_trade_kill_count (int, required)
+- first_trade_death_count (int, required)
+- one_kill_count (int, required)
+- two_kill_count (int, required)
+- three_kill_count (int, required)
+- four_kill_count (int, required)
+- five_kill_count (int, required)
+- inspect_weapon_count (int, required): times player inspected weapon
+- color (int, required): player color code
+- crosshair_share_code (string, optional): crosshair config code
+
+Example data:
+"id","match_checksum","steam_id","index","team_name","name","kill_count","death_count","assist_count","kill_death_ratio","headshot_count","headshot_percentage","damage_health","damage_armor","first_kill_count","first_death_count","mvp_count","average_damage_per_round","average_kill_per_round","average_death_per_round","utility_damage_per_round","rank_type","rank","old_rank","wins_count","bomb_planted_count","bomb_defused_count","hostage_rescued_count","score","kast","hltv_rating","hltv_rating_2","utility_damage","trade_kill_count","trade_death_count","first_trade_kill_count","first_trade_death_count","one_kill_count","two_kill_count","three_kill_count","four_kill_count","five_kill_count","inspect_weapon_count","color","crosshair_share_code"
+1,"25bdb8a5103a56a4","76561198113666193",9,Vitality,ZywOo,10,10,9,1.0,3,30.0,1241,149,1,2,1,65.31579,0.526316,0.526316,4.263158,-1,0,0,0,1,0,0,30,84.210526,0.857668,1.106826,81,1,4,0,1,8,1,0,0,0,0,3,CSGO-Xi4NX-WUD8O-kRLD7-JJrYj-EGnfO
+2,"25bdb8a5103a56a4","76561197973140692",4,Vitality,mezii,21,12,9,1.75,11,52.0,2087,404,4,2,4,109.8421,1.105263,0.631579,16.526316,-1,0,0,0,1,1,0,53,78.94737,1.560583,1.655199,314,5,1,0,0,8,2,3,0,0,0,4,CSGO-wAD3c-ykt5L-zvZ98-vBisR-6sWPA
+3,"25bdb8a5103a56a4","76561197978835160",5,Vitality,flameZ,21,9,3,2.33,8,38.0,1740,350,1,2,3,91.57895,1.105263,0.473684,10.894737,-1,0,0,0,1,1,0,54,100.0,1.659188,1.803123,207,3,3,0,2,7,4,2,0,0,0,1,CSGO-ANFqt-s6dDk-cZGKb-dMXSu-wzUrC
+
+
+Table: rounds
+- id (bigserial, PK, auto-increment): unique round record ID
+- match_checksum (string, required): match ID
+- number (integer, required): round number in match
+- start_tick (integer, required): tick when round started
+- freeze_time_end_tick (integer, required): tick when freeze time (time to buy) ended
+- end_tick (integer, required): tick when round ended
+- end_officially_tick (integer, required): tick when round officially ended
+- team_a_name (string, required): team A name
+- team_b_name (string, required): team B name
+- team_a_score (integer, required): team A score after round
+- team_b_score (integer, required): team B score after round
+- team_a_side (smallint, required): team A side (2=Terrorists, 3=Counter Terrorists)
+- team_b_side (smallint, required): team B side (2=Terrorists, 3=Counter Terrorists)
+- team_a_start_money (integer, required): team A money at round start
+- team_b_start_money (integer, required): team B money at round start
+- team_a_equipment_value (integer, required): team A equipment value at round start
+- team_b_equipment_value (integer, required): team B equipment value at round start
+- team_a_money_spent (integer, required): team A money spent during round
+- team_b_money_spent (integer, required): team B money spent during round
+- team_a_economy_type (string, required): team A economy type (e.g., eco, buy)
+- team_b_economy_type (string, required): team B economy type
+- duration (integer, required): round duration in ticks
+- end_reason (smallint, required): reason why round endek (1=bomb exploded, 9=ct killed, 7=bomb defused, 8=t killed, 12=time ended)
+- winner_name (string, required): winning team name
+- winner_side (smallint, required): winning team side (2=Terrorists, 3=Counter Terrorists)
+- overtime_number (integer, required, default 0): overtime round number, 0 if not OT
+
+Example data:
+"id","match_checksum","number","start_tick","start_frame","freeze_time_end_tick","freeze_time_end_frame","end_tick","end_frame","end_officially_tick","end_officially_frame","team_a_name","team_b_name","team_a_score","team_b_score","team_a_side","team_b_side","team_a_start_money","team_b_start_money","team_a_equipment_value","team_b_equipment_value","team_a_money_spent","team_b_money_spent","team_a_economy_type","team_b_economy_type","duration","end_reason","winner_name","winner_side","overtime_number"
+1,"25bdb8a5103a56a4",1,120,212,5385,6844,13422,16378,13870,16907,Vitality,The MongolZ,0,1,3,2,4000,4000,5250,4800,3450,3400,pistol,pistol,198604,9,The MongolZ,2,0
+2,"25bdb8a5103a56a4",2,13870,16907,15150,18878,21709,26962,22157,27488,Vitality,The MongolZ,1,1,3,2,11250,19850,11300,20550,10900,19150,force-buy,full,123528,8,Vitality,3,0
+3,"25bdb8a5103a56a4",3,22157,27488,23437,29329,28859,36023,29307,36567,Vitality,The MongolZ,2,1,3,2,18400,8900,22450,8300,17300,8100,semi,force-buy,104855,8,Vitality,3,0
+
+
+Table: shots
+- id (bigserial, PK, auto-increment): unique shot record ID
+- match_checksum (string, required): match ID
+- round_number (integer, required): round number in match
+- tick (integer, required): game tick when shot was fired
+- weapon_name (string, required): name of the weapon used
+- weapon_id (string, required): weapon unique ID
+- projectile_id (string, required): projectile unique ID
+- player_steam_id (string, required): shooting player's Steam ID
+- player_side (smallint, required): player's side (CT or T)
+- player_name (string, required): shooting player's name
+- player_team_name (string, required): shooting player's team name
+- x (float, required): shot position X coordinate
+- y (float, required): shot position Y coordinate
+- z (float, required): shot position Z coordinate
+- player_velocity_x (float, required): player velocity on X axis
+- player_velocity_y (float, required): player velocity on Y axis
+- player_velocity_z (float, required): player velocity on Z axis
+- recoil_index (float, required): recoil index at the shot time
+
+Example data:
+"id","match_checksum","round_number","tick","weapon_name","weapon_id","projectile_id","player_steam_id","player_side","player_name","player_team_name","x","y","z","player_velocity_x","player_velocity_y","player_velocity_z","recoil_index"
+848892,d90e8f6233f8c623,32,269327,AK-47,"01JZWTCEC7EMSFN5ZN8FAHPMTP","0","76561197991272318",2,ropz,Vitality,668.574036,-1522.366577,-415.46875,0.0,0.0,0.0,8.0
+848893,d90e8f6233f8c623,33,270949,Glock-18,"01JZWTCFYDF5N5ZEB0B67WV3B3","0","76561197978835160",2,flameZ,Vitality,-1911.575562,-1095.711548,-415.96875,155.40625,14.359375,0.0,1.0
+848894,d90e8f6233f8c623,33,270971,Glock-18,"01JZWTCFYDF5N5ZEB0B67WV3B3","0","76561197978835160",2,flameZ,Vitality,-1850.526123,-1120.643555,-415.96875,176.570312,-142.851562,0.0,1.421696
+
+
+Table: smokes_start
+- id (bigserial, PK, auto-increment): unique smoke grenade throw record ID
+- match_checksum (string, required): match ID
+- round_number (integer, required): round number in match
+- tick (integer, required): game tick when smoke grenade was thrown
+- thrower_steam_id (string, required): thrower's Steam ID
+- thrower_name (string, required): thrower's name
+- thrower_team_name (string, required): thrower's team name
+- thrower_side (smallint, required): thrower's side (CT or T)
+- grenade_id (string, required): grenade unique ID
+- x (float, required): smoke grenade throw position X coordinate
+- y (float, required): smoke grenade throw position Y coordinate
+- z (float, required): smoke grenade throw position Z coordinate
+
+Example data:
+"id","match_checksum","round_number","tick","thrower_steam_id","thrower_name","thrower_team_name","thrower_side","grenade_id","x","y","z"
+1,"25bdb8a5103a56a4",1,10260,"76561199203563345","910",The MongolZ,2,"01JZWPGS14MBKCHWB0THFWBZGN",1010.354187,2639.179199,244.111496
+2,"25bdb8a5103a56a4",1,10893,"76561198959824088",bLitz,The MongolZ,2,"01JZWPGS10RP8STZZB2ZW42XSJ",529.458984,3207.236572,165.485275
+3,"25bdb8a5103a56a4",1,11941,"76561198113666193",ZywOo,Vitality,3,"01JZWPGS10RP8STZZB2T4TY6AT",798.976501,2402.931885,138.031464
+
+
+Table: teams
+- id (bigserial, PK, auto-increment): unique team record ID
+- match_checksum (string, required): match ID
+- name (string, required): team name
+- current_side (smallint, required): current side (CT or T)
+- score (integer, required): total score
+- score_first_half (integer, required): score in first half
+- score_second_half (integer, required): score in second half
+- letter (string, required): team letter (e.g., A or B)
+
+Example data:
+"id","match_checksum","name","current_side","score","score_first_half","score_second_half","letter"
+1,"25bdb8a5103a56a4",Vitality,2,13,9,4,A
+2,"25bdb8a5103a56a4",The MongolZ,3,6,3,3,B
+3,"233adc4d365bb484",Vitality,2,13,9,4,A
+
+### PROMPT AND QUERY EXAMPLES:
+
+PROMPT: 
+Top 10 players with highest AWP shot accuracy (awp shots that dealt some damage/total awp shots).
+
+QUERY:
+WITH awp_shots AS (
+    SELECT 
+        s.player_name,
+        COUNT(*) as total_awp_shots
+    FROM shots s
+    WHERE s.weapon_name = 'AWP'
+    GROUP BY s.player_name
+),
+awp_hits AS (
+    SELECT 
+        d.attacker_steam_id,
+        p.name as player_name,
+        COUNT(*) as hit_awp_shots
+    FROM damages d
+    JOIN players p ON d.attacker_steam_id = p.steam_id AND d.match_checksum = p.match_checksum
+    WHERE d.weapon_name = 'AWP'
+    GROUP BY d.attacker_steam_id, p.name
+)
+SELECT 
+    aws.player_name,
+    aws.total_awp_shots,
+    COALESCE(ah.hit_awp_shots, 0) as hit_awp_shots,
+    ROUND(
+        CASE 
+            WHEN aws.total_awp_shots > 0 THEN 
+                (COALESCE(ah.hit_awp_shots, 0)::numeric / aws.total_awp_shots::numeric) * 100
+            ELSE 0 
+        END, 2
+    ) as awp_shot_accuracy_percent
+FROM awp_shots aws
+LEFT JOIN awp_hits ah ON aws.player_name = ah.player_name
+WHERE aws.total_awp_shots >= 5
+ORDER BY awp_shot_accuracy_percent DESC
+LIMIT 10;
+
+PROMPT:
+show top 10 players that have most % of damage dealt in right arm hitgroup (right arm damage/total damage)
+
+EXAMPLE:
+WITH player_damage_stats AS (
+    SELECT 
+        d.attacker_steam_id,
+        p.name as player_name,
+        SUM(CASE WHEN d.hitgroup = 5 THEN d.health_damage ELSE 0 END) as right_arm_damage,
+        SUM(d.health_damage) as total_damage
+    FROM damages d
+    JOIN players p ON d.attacker_steam_id = p.steam_id AND d.match_checksum = p.match_checksum
+    WHERE d.attacker_steam_id IS NOT NULL
+    GROUP BY d.attacker_steam_id, p.name
+    HAVING SUM(d.health_damage) > 0
+)
+SELECT 
+    player_name,
+    right_arm_damage,
+    total_damage,
+    ROUND(
+        (right_arm_damage::numeric / total_damage::numeric) * 100, 2
+    ) as right_arm_damage_percent
+FROM player_damage_stats
+WHERE total_damage >= 100
+ORDER BY right_arm_damage_percent DESC
+LIMIT 10;
+
+PROMPT: show teams with best % of won rounds in post-plant situations as CT on every map, bombsite A/B seperately. (mirage, anubis, inferno, ancient, train, nuke, dust2)
+
+EXAMPLE:
+WITH post_plant_rounds AS (
+    SELECT 
+        r.match_checksum,
+        r.number as round_number,
+        r.winner_side,
+        bp.site,
+        m.map_name,
+        CASE 
+            WHEN r.team_a_side = 3 THEN r.team_a_name
+            WHEN r.team_b_side = 3 THEN r.team_b_name
+        END as ct_team_name
+    FROM rounds r
+    JOIN bombs_planted bp ON r.match_checksum = bp.match_checksum AND r.number = bp.round_number
+    JOIN matches m ON r.match_checksum = m.checksum
+    WHERE m.map_name IN ('de_mirage', 'de_anubis', 'de_inferno', 'de_ancient', 'de_train', 'de_nuke', 'de_dust2')
+),
+team_postplant_stats AS (
+    SELECT 
+        ct_team_name,
+        map_name,
+        site,
+        COUNT(*) as total_postplant_rounds,
+        SUM(CASE WHEN winner_side = 3 THEN 1 ELSE 0 END) as ct_wins
+    FROM post_plant_rounds
+    WHERE ct_team_name IS NOT NULL
+    GROUP BY ct_team_name, map_name, site
+    HAVING COUNT(*) >= 20
+)
+SELECT 
+    ct_team_name as team,
+    map_name,
+    site,
+    total_postplant_rounds,
+    ct_wins,
+    ROUND((ct_wins::numeric / total_postplant_rounds::numeric) * 100, 2) as ct_postplant_winrate_percent
+FROM team_postplant_stats
+ORDER BY map_name, site, ct_postplant_winrate_percent DESC;
+
+PROMPT:
+show me all players that have most damage dealt by each hitgroup
+name | hitgroup name | total damage dealt | total damage dealt to this hitgroup | % (hitgroup damage/total damage)
+
+
+QUERY:
+WITH player_damage_by_hitgroup AS (
+    SELECT 
+        p.name,
+        d.hitgroup,
+        SUM(d.health_damage) as hitgroup_damage,
+        SUM(SUM(d.health_damage)) OVER (PARTITION BY p.name) as total_damage
+    FROM damages d
+    JOIN players p ON d.attacker_steam_id = p.steam_id AND d.match_checksum = p.match_checksum
+    WHERE d.attacker_steam_id IS NOT NULL
+    GROUP BY p.name, d.hitgroup
+),
+ranked_damage AS (
+    SELECT 
+        name,
+        hitgroup,
+        hitgroup_damage,
+        total_damage,
+        ROUND((hitgroup_damage::numeric / total_damage::numeric) * 100, 2) as hitgroup_damage_percent,
+        ROW_NUMBER() OVER (PARTITION BY hitgroup ORDER BY hitgroup_damage DESC) as rank
+    FROM player_damage_by_hitgroup
+    WHERE total_damage >= 100
+)
+SELECT 
+    name,
+    CASE 
+        WHEN hitgroup = 0 THEN 'generic'
+        WHEN hitgroup = 1 THEN 'head'
+        WHEN hitgroup = 2 THEN 'chest'
+        WHEN hitgroup = 3 THEN 'stomach'
+        WHEN hitgroup = 4 THEN 'left_arm'
+        WHEN hitgroup = 5 THEN 'right_arm'
+        WHEN hitgroup = 6 THEN 'left_leg'
+        WHEN hitgroup = 7 THEN 'right_leg'
+        WHEN hitgroup = 8 THEN 'neck'
+    END as hitgroup_name,
+    total_damage as total_damage_dealt,
+    hitgroup_damage as total_damage_dealt_to_hitgroup,
+    hitgroup_damage_percent
+FROM ranked_damage
+WHERE rank = 1
+ORDER BY hitgroup;
+
+
+PROMPT:
+show me teams that have highest eco/force-buy vs full rounds % winrate on de_nuke,  as T side, divide it on bombsites a/b
+
+QUERY:
+WITH nuke_rounds AS (
+    SELECT 
+        r.match_checksum,
+        r.number as round_number,
+        r.winner_side,
+        CASE 
+            WHEN r.team_a_side = 2 THEN r.team_a_name
+            WHEN r.team_b_side = 2 THEN r.team_b_name
+        END as t_team_name,
+        CASE 
+            WHEN r.team_a_side = 2 THEN r.team_a_economy_type
+            WHEN r.team_b_side = 2 THEN r.team_b_economy_type
+        END as t_economy_type,
+        CASE 
+            WHEN r.team_a_side = 3 THEN r.team_a_economy_type
+            WHEN r.team_b_side = 3 THEN r.team_b_economy_type
+        END as ct_economy_type,
+        bp.site
+    FROM rounds r
+    JOIN matches m ON r.match_checksum = m.checksum
+    LEFT JOIN bombs_planted bp ON r.match_checksum = bp.match_checksum AND r.number = bp.round_number
+    WHERE m.map_name = 'de_nuke'
+    AND bp.site IS NOT NULL
+),
+eco_vs_full_rounds AS (
+    SELECT 
+        t_team_name,
+        site,
+        COUNT(*) as total_rounds,
+        SUM(CASE WHEN winner_side = 2 THEN 1 ELSE 0 END) as t_wins
+    FROM nuke_rounds
+    WHERE t_team_name IS NOT NULL
+    AND t_economy_type IN ('eco', 'force-buy')
+    AND ct_economy_type = 'full'
+    GROUP BY t_team_name, site
+    HAVING COUNT(*) >= 5
+)
+SELECT 
+    t_team_name as team,
+    site,
+    total_rounds,
+    t_wins,
+    ROUND((t_wins::numeric / total_rounds::numeric) * 100, 2) as eco_vs_full_winrate_percent
+FROM eco_vs_full_rounds
+ORDER BY site, eco_vs_full_winrate_percent DESC;
+
+PostgreSQL:

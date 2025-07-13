@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 
 st.set_page_config(
     page_title='CS analyzer',
@@ -10,7 +11,8 @@ st.set_page_config(
 st.title('Counter Strike AI Analysis')
 st.caption('Ask a question about recent S-tier Counter-Strike match.')
 
-API_URL = "http://127.0.0.1:8000/api/query"
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api/query")
+
 prompt = st.text_input(
     'Your prompt',
     placeholder='e.g Which player have the most kills on map de_inferno?',
@@ -26,8 +28,8 @@ if prompt:
             response.raise_for_status()
             result = response.json()
 
-            st.subheader('Generated SQL query')
-            st.code(result['sql_query'], language='sql')
+            #st.subheader('Generated SQL query')
+            #st.code(result['sql_query'], language='sql')
 
             if result['error']:
                 st.error(f'An error occured: {result['error']}')

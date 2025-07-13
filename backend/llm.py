@@ -13,7 +13,9 @@ except FileNotFoundError:
 SYSTEM_INSTRUCTION = """You are an expert SQL analyst.
     Your task is to write a single, executable SQL query for a DuckDB database based on a user's question.
     Use only the provided schema. DO NOT WRAP YOUR QUERY TO ```sql``` tags, or any other markdown formatting.
-    NO WRITE QUERIES, THE DATABASE IS READ-ONLY."""
+    NO WRITE QUERIES, THE DATABASE IS READ-ONLY.
+    If you’re unsure about what components are used, select the most relevant base columns that likely contribute to that metric.
+    """
 
 llm_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
