@@ -32,7 +32,8 @@ if prompt:
             #st.code(result['sql_query'], language='sql')
 
             if result['error']:
-                st.error(f'An error occured: {result['error']}')
+                error_message = result['error']
+                st.error(f'An error occured: {error_message}')
             elif result['data']:
                 st.subheader('Query Result')
 
